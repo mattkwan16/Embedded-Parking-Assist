@@ -4,6 +4,7 @@
 #include <thread>
 #include <chrono>
 #include "Sensor.h"
+#include "Obstacle.h"
 
 int main() {
     Sensor sensor;
