@@ -30,6 +30,8 @@ void Sensor::stop() {
 }
 
 void Sensor::updateData(float data) {
+    // Lock the mutex before updating the data
+    std::lock_guard<std::mutex> lock(mtx_);
     data_ = data;
 }
 
