@@ -3,7 +3,15 @@
 
 #include <mutex>
 #include <thread>
+#include "Ping.h"
 
+/*  Sensor.h
+
+    Sensors add noise but provides a moving average every ___ms
+    Sensors detect false echos and keys the pings
+    Simulation calls Sensor's ping() function which returns the closest obstacle
+
+*/
 class Sensor {
 public:
     Sensor();
@@ -12,6 +20,7 @@ public:
     void start();
     void stop();
     void updateData(float data);
+    Ping ping() const;
 
 private:
     void outputLoop();

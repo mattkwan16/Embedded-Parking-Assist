@@ -29,6 +29,16 @@ void Sensor::stop() {
     }
 }
 
+Ping Sensor::ping() const {
+    Ping p;
+    // todo: keying
+    // todo: amplitude shifting
+    p.amplitude = 1.0f;
+    p.key = "hash1";
+    p.tof = 0.0f;
+    return p;
+}
+
 void Sensor::updateData(float data) {
     // Lock the mutex before updating the data
     std::lock_guard<std::mutex> lock(mtx_);
@@ -49,6 +59,7 @@ void Sensor::outputLoop() {
         }
 
         // Output a float
+        // todo: float becomes ping which goes to cpu
         std::cout << data_ << std::endl;
 
         // Calculate the elapsed time
