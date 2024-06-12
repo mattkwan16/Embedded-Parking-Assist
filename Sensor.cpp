@@ -5,7 +5,7 @@
 
 Sensor::Sensor() : 
     running_(false),
-    data_(0.0) {
+    data_() {
 
 }
 
@@ -39,10 +39,10 @@ Ping Sensor::ping() const {
     return p;
 }
 
-void Sensor::updateData(float data) {
+void Sensor::updateData(Ping const &echo) {
     // Lock the mutex before updating the data
     std::lock_guard<std::mutex> lock(mtx_);
-    data_ = data;
+    data_ = echo;
 }
 
 void Sensor::outputLoop() {
@@ -58,9 +58,11 @@ void Sensor::outputLoop() {
             }
         }
 
-        // Output a float
-        // todo: float becomes ping which goes to cpu
-        std::cout << data_ << std::endl;
+        // Output closest obstacle
+        // todo: ping goes to cpu
+        std::cout << "Closest obstacle (amp, tof, key): ("
+                  << data_.amplitude << ", " << data_.tof
+                  << ", " << data_.key << ")" << std::endl;
 
         // Calculate the elapsed time
         auto end = std::chrono::high_resolution_clock::now();

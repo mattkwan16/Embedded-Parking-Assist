@@ -1,6 +1,7 @@
 #include "Simulator.h"
 #include "Ping.h"
 #include <iostream>
+#include <limits>
 
 Simulator::Simulator() {}
 
@@ -22,18 +23,21 @@ void Simulator::addSensor(Sensor* s) {
 // Echos the key
 void Simulator::pingObstacles() const {
     std::lock_guard<std::mutex> lock(mtx_);
-    Ping p;
-    float closest_obstacle_amp = 0.0f;
+    Ping echo;
+    Ping closest;
+    closest.tof = std::numeric_limits<float>::max();
     for (int i = 0; i < sensors_.size(); i++) {
         Ping input = sensors_[i]->ping();
         for (const auto& obstacle : obstacles_) {
-            p = obstacle.ping(input);
+            echo = obstacle.ping(input);
             std::cout << "Simulator: Obstacle at (" << obstacle.x << ", " << obstacle.y 
-                    << ") has amplitude: " << p.amplitude << std::endl;
-            if (p.amplitude != 0.0f && p.amplitude < closest_obstacle_amp) {
-                closest_obstacle_amp = p.amplitude;
+                    << ") has amplitude: " << echo.amplitude << std::endl;
+            // todo: move this intelligence to sensor
+            if (echo.tof != 0.0f && echo.amplitude != 0.0f &&
+                echo.tof < closest.tof) {
+                closest = echo;
             }
         }
+        sensors_[i]->updateData(closest);
     }
 }
-

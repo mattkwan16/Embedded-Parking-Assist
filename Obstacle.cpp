@@ -5,6 +5,7 @@
 
 #define RANGE 10.0f
 #define SCALE 1.0f 
+#define SPEED_OF_SOUND_MPS 343.0f
 
 Obstacle::Obstacle(float x, float y) : x(x), y(y) {}
 
@@ -18,10 +19,12 @@ Ping Obstacle::ping(const Ping &input) const {
     if (distance <= RANGE) {
         // Return the scaled amplitude
         output.amplitude = SCALE * (RANGE - distance)/RANGE * input.amplitude;
+        output.tof = distance/SPEED_OF_SOUND_MPS;
         return output;
     } else {
         // Return 0 if the obstacle is out of range
         output.amplitude = 0.0f;
+        output.tof = 0.0f;
         return output;
     }
 }

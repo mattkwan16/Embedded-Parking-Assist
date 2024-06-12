@@ -19,7 +19,7 @@ public:
 
     void start();
     void stop();
-    void updateData(float data);
+    void updateData(Ping const& data);
     Ping ping() const;
 
 private:
@@ -28,7 +28,7 @@ private:
     std::thread thread_;
     bool running_;
 
-    float data_;
+    Ping data_;
     std::mutex mtx_;
 };
 
