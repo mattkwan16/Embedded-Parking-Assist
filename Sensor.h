@@ -1,6 +1,7 @@
 #ifndef SENSOR_H
 #define SENSOR_H
 
+#include <mutex>
 #include <thread>
 
 class Sensor {
