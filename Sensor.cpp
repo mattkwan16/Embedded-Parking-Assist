@@ -5,6 +5,7 @@
 
 Sensor::Sensor() : 
     running_(false),
+    ping_ready_(false),
     data_() {
 
 }
@@ -27,6 +28,7 @@ void Sensor::stop() {
             thread_.join();
         }
     }
+    ping_ready_ = false;
 }
 
 Ping Sensor::ping() const {
@@ -45,11 +47,20 @@ void Sensor::updateData(Ping const &echo) {
     data_ = echo;
 }
 
+bool Sensor::ping_ready() const {
+    return ping_ready_;
+}
+
+// Output loop of n ms is the listening window (set flag then wait). 
+// Then it outputs to console and cpu then flag again.
 void Sensor::outputLoop() {
     const int OUTPUT_PERIOD_MS = 200;
     while (running_) {
+        // Set ping flag for sim
+        ping_ready_ = true;
         auto start = std::chrono::high_resolution_clock::now();
         int duration = 0;
+        // Listening window
         while (true) {
             auto end = std::chrono::high_resolution_clock::now();
             duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();

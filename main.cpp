@@ -10,22 +10,21 @@ int main() {
     simulator.addObstacle(Obstacle(20.0f, 15.0f));
     simulator.addObstacle(Obstacle(1.0f, 5.0f));
     simulator.addSensor(&sensor);
-
+    simulator.start();
     sensor.start();
 
     // Ping obstacles
     // todo: ping obstacles every n ms
-    simulator.pingObstacles();
 
     // Let the threads run
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
     simulator.addObstacle(Obstacle(1.5f, 1.0f));
-    simulator.pingObstacles();
 
     // Let the threads run
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
     sensor.stop();
+    simulator.stop();
     return 0;
 }

@@ -21,12 +21,14 @@ public:
     void stop();
     void updateData(Ping const& data);
     Ping ping() const;
+    bool ping_ready() const;
 
 private:
     void outputLoop();
 
     std::thread thread_;
     bool running_;
+    bool ping_ready_;
 
     Ping data_;
     std::mutex mtx_;
