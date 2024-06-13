@@ -20,6 +20,7 @@ public:
     void start();
     void stop();
     void updateData(Ping const& data);
+    Ping data() { return data_; };
     Ping ping() const;
     bool ping_ready() const;
 

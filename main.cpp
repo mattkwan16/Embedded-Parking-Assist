@@ -1,6 +1,7 @@
 #include <iostream>
 #include "Sensor.h"
 #include "Obstacle.h"
+#include "Cpu.h"
 #include "Simulator.h"
 
 void start_test(std::vector<Sensor>& sensors, Simulator& simulator) {
@@ -39,6 +40,8 @@ void test_case1(Simulator& simulator) {
 
 int main() {
     Simulator simulator;
+    Cpu cpu;
+    simulator.addCpu(&cpu);
 
     test_case1(simulator);
 

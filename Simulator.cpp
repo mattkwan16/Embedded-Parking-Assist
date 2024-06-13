@@ -3,7 +3,10 @@
 #include <iostream>
 #include <limits>
 
-Simulator::Simulator() {}
+Simulator::Simulator() : 
+    running_(false),
+    cpu_(nullptr) {
+}
 
 Simulator::~Simulator() {
     stop();
@@ -14,6 +17,9 @@ void Simulator::start() {
         running_ = true;
         thread_ = std::thread(&Simulator::pingObstacles, this);
     }
+    if (cpu_) {
+        cpu_->start();
+    }
 }
 
 void Simulator::stop() {
@@ -22,6 +28,9 @@ void Simulator::stop() {
         if (thread_.joinable()) {
             thread_.join();
         }
+    }
+    if (cpu_) {
+        cpu_->stop();
     }
 }
 
@@ -33,6 +42,10 @@ void Simulator::addObstacle(const Obstacle& obstacle) {
 void Simulator::addSensor(Sensor* s) {
     std::lock_guard<std::mutex> lock(mtx_);
     sensors_.push_back(s);
+}
+
+void Simulator::addCpu(Cpu* cpu) {
+    cpu_ = cpu;
 }
 
 // Takes a true ping
@@ -66,6 +79,9 @@ void Simulator::pingObstacles() const {
             }
             std::lock_guard<std::mutex> lock(mtx_);
             sensors_[i]->updateData(closest);
+        }
+        if (cpu_->process_ready()) {
+            cpu_->processSensors(sensors_);
         }
     }
 }

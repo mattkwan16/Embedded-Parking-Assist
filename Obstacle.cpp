@@ -5,7 +5,6 @@
 
 #define RANGE 10.0f
 #define SCALE 1.0f 
-#define SPEED_OF_SOUND_MPS 343.0f
 
 Obstacle::Obstacle(float x, float y) : x(x), y(y) {}
 
