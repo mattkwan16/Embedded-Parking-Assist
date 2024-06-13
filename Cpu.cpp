@@ -1,6 +1,7 @@
 #include "Cpu.h"
 #include "Sensor.h"
 #include <iostream>
+#include <sstream>
 #include <thread>
 #include <chrono>
 
@@ -37,15 +38,9 @@ void Cpu::stop() {
 // Output: 1-5 scale of distance from each sensor displayed on console
 void Cpu::display() {
     //TODO: display the positions of the obstacles?
-    for (int i = 1; i <= distances_.size(); i++) {
-        std::string ruler = "||";
-        ruler.insert(1, distances_[i-1], '*');
-        if (distances_[i-1] == OUT_OF_RANGE) {
-            ruler = "|--- n/a ---|";
-        }
-        std::cout << "\nSensor " << i << " distance: "
-                  << ruler << "\n\n";
-    }
+    std::lock_guard<std::mutex> lg(this->mtx_);
+    std::cout << s_ << std::endl;
+    s_ = "\n\nNo new information available.\n\n";
 }
 
 void Cpu::processSensors(std::vector<Sensor*> sensors) {
@@ -70,13 +65,30 @@ void Cpu::processSensors(std::vector<Sensor*> sensors) {
             distances_.push_back(EXTREMELY_CLOSE);
         }
     }
+    prepDisplay();
+}
+
+// Prepping the display means the cpu can keep up
+void Cpu::prepDisplay() {
+    std::stringstream oss;
+    for (int i = 1; i <= distances_.size(); i++) {
+        std::string stars(distances_[i-1], '*');
+        if (distances_[i-1] == OUT_OF_RANGE) {
+            stars = "--- n/a ---";
+        }
+        oss << "\nSensor " << i << " distance: "
+                  << "| " << stars << " |\n\n";
+    }
+    std::lock_guard<std::mutex> lg(this->mtx_);
+    s_ = oss.str().c_str();
 }
 
 void Cpu::processLoop() {
     const int OUTPUT_PERIOD_MS = 500;
     while (running_) {
         // Set ping flag for sim
-        process_ready_ = true; //tood: change to false when?
+        // Change to false during display
+        process_ready_ = true;
         auto start = std::chrono::high_resolution_clock::now();
         int duration = 0;
         // Waiting-for-sensors window
@@ -84,6 +96,7 @@ void Cpu::processLoop() {
             auto end = std::chrono::high_resolution_clock::now();
             duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
             if (duration >= OUTPUT_PERIOD_MS) {
+                process_ready_ = false;
                 break;
             }
         }

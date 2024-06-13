@@ -26,5 +26,8 @@ private:
     bool running_;
     bool process_ready_;
     std::vector<Distance> distances_;
+    void prepDisplay();
+    std::string s_;
+    std::mutex mtx_;
 };
 #endif

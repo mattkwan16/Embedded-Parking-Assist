@@ -39,8 +39,13 @@ float Sensor::amplitudeShift() {
 }
 
 std::string Sensor::key() {
-    // TODO
-    return "hash1";
+    const int LEN_POSSIBLE_CHARS = 62;
+    const int LEN_HASH = 7;
+    std::string s(LEN_HASH, 0); 
+    std::generate(s.begin(), s.end(), []{
+        return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"[rand() % LEN_POSSIBLE_CHARS];
+        }); 
+    return s;
 }
 
 Ping Sensor::ping() {
