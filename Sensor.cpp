@@ -6,7 +6,7 @@
 Sensor::Sensor() : 
     running_(false),
     ping_ready_(false),
-    data_() {
+    data_(Ping()) {
 
 }
 
@@ -31,14 +31,39 @@ void Sensor::stop() {
     ping_ready_ = false;
 }
 
-Ping Sensor::ping() const {
+float Sensor::amplitudeShift() {
+    // TODO
+    return 1.0f;
+}
+
+std::string Sensor::key() {
+    // TODO
+    return "hash1";
+}
+
+Ping Sensor::ping() {
     Ping p;
-    // todo: keying
-    // todo: amplitude shifting
-    p.amplitude = 1.0f;
-    p.key = "hash1";
+    p.amplitude = amplitudeShift();
+    p.key = key();
     p.tof = 0.0f;
+
+    // Reset previous ping information
+    ping_ready_ = false;
+    sentData_ = p;
+    updateData(Ping());
+
     return p;
+}
+
+// processEcho: update data iff it has correctly scaled amplitude,
+// matches the hash, and is closer than the other pings
+void Sensor::processEcho(Ping const &echo) {
+    if (echo.tof != 0.0f && echo.tof != std::numeric_limits<float>::max() &&
+        echo.amplitude != 0.0f && echo.amplitude < sentData_.amplitude &&
+        echo.key == sentData_.key &&
+        echo.tof < data_.tof) {
+        updateData(echo);
+    }
 }
 
 void Sensor::updateData(Ping const &echo) {

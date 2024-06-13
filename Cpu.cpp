@@ -76,7 +76,7 @@ void Cpu::processLoop() {
     const int OUTPUT_PERIOD_MS = 500;
     while (running_) {
         // Set ping flag for sim
-        process_ready_ = true;
+        process_ready_ = true; //tood: change to false when?
         auto start = std::chrono::high_resolution_clock::now();
         int duration = 0;
         // Waiting-for-sensors window
