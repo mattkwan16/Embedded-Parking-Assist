@@ -32,8 +32,10 @@ void Sensor::stop() {
 }
 
 float Sensor::amplitudeShift() {
-    // TODO
-    return 1.0f;
+    const float MIN_AMP = 1.5f;
+    // max must be int for mod
+    const int MAX_AMP = 5;
+    return MIN_AMP + float(rand() % MAX_AMP);
 }
 
 std::string Sensor::key() {
@@ -46,6 +48,11 @@ Ping Sensor::ping() {
     p.amplitude = amplitudeShift();
     p.key = key();
     p.tof = 0.0f;
+
+    // Display
+    std::cout << "Sent ping (amp, tof, key): ("
+                << p.amplitude << ", " << p.tof
+                << ", " << p.key << ")" << std::endl;
 
     // Reset previous ping information
     ping_ready_ = false;
@@ -93,9 +100,7 @@ void Sensor::outputLoop() {
                 break;
             }
         }
-
         // Output closest obstacle
-        // todo: ping goes to cpu
         std::cout << "Closest obstacle (amp, tof, key): ("
                   << data_.amplitude << ", " << data_.tof
                   << ", " << data_.key << ")" << std::endl;
