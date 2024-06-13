@@ -34,6 +34,11 @@ void Simulator::stop() {
     }
 }
 
+void Simulator::clear() {
+    sensors_.clear();
+    obstacles_.clear();
+}
+
 void Simulator::addObstacle(const Obstacle& obstacle) {
     std::lock_guard<std::mutex> lock(mtx_);
     obstacles_.push_back(obstacle);

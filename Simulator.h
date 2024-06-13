@@ -17,6 +17,7 @@ public:
     void addSensor(Sensor* sensor);
     void addCpu(Cpu* cpu);
     void pingObstacles() const;
+    void clear();
 
 private:
     std::vector<Obstacle> obstacles_;

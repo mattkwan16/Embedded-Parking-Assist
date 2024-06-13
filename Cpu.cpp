@@ -40,8 +40,11 @@ void Cpu::display() {
     for (int i = 1; i <= distances_.size(); i++) {
         std::string ruler = "||";
         ruler.insert(1, distances_[i-1], '*');
-        std::cout << "Sensor " << i << " distance: ";
-        std::cout          << ruler << std::endl;
+        if (distances_[i-1] == OUT_OF_RANGE) {
+            ruler = "|--- n/a ---|";
+        }
+        std::cout << "\nSensor " << i << " distance: "
+                  << ruler << "\n\n";
     }
 }
 
@@ -51,7 +54,7 @@ void Cpu::processSensors(std::vector<Sensor*> sensors) {
     const float SOMEWHAT_CLOSE_M = 3.0f;
     const float NOT_CLOSE_M = 4.0f;
 
-    distances_.resize(0);
+    distances_.clear();
     for (const auto& sensor : sensors) {
         Ping p = sensor->data();
         float distance_m = p.tof * SPEED_OF_SOUND_MPS;
