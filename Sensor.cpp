@@ -80,6 +80,6 @@ void Sensor::outputLoop() {
         duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
         // Print the elapsed time to ensure it's approximately n milliseconds
-        std::cout << "Elapsed time: " << duration << " milliseconds" << std::endl;
+        std::cout << "Sensor elapsed time: " << duration << " milliseconds" << std::endl;
     }
 }

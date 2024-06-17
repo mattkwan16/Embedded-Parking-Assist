@@ -5,11 +5,11 @@ CXXFLAGS = -Wall -std=c++17 -pthread
 # Output executable name
 TARGET = embedded_parking_assist
 # Source files
-SRCS = main.cpp Simulator.cpp Sensor.cpp Obstacle.cpp
+SRCS = main.cpp Simulator.cpp Sensor.cpp Obstacle.cpp Cpu.cpp
 # Object files
 OBJS = $(SRCS:.cpp=.o)
 # Header files
-HEADERS = Ping.h
+HEADERS = Ping.h 
 
 # Default rule to build the executable
 all: $(TARGET)

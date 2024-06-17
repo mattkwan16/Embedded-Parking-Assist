@@ -3,6 +3,8 @@
 
 #include <string>
 
+#define SPEED_OF_SOUND_MPS 343.0f
+
 struct Ping {
     float amplitude;
     float tof;

@@ -1,20 +1,33 @@
 #include <iostream>
 #include "Sensor.h"
 #include "Obstacle.h"
+#include "Cpu.h"
 #include "Simulator.h"
 
-int main() {
-    Sensor sensor;
+void start_test(std::vector<Sensor>& sensors, Simulator& simulator) {
+    simulator.start();
+    for (int i = 0; i < sensors.size(); i++) {
+        sensors[i].start();
+    }
+}
 
-    Simulator simulator;
+void stop_test(std::vector<Sensor>& sensors, Simulator& simulator) {
+    for (int i = 0; i < sensors.size(); i++) {
+        sensors[i].stop();
+    }
+    simulator.stop();
+    simulator.clear();
+}
+
+// One out of range, one in range, then one closer in range
+void test_case1(Simulator& simulator) {
+    int NUM_TEST_SENSORS = 1;
+    std::vector<Sensor> sensors(NUM_TEST_SENSORS);
+
+    start_test(sensors, simulator);
     simulator.addObstacle(Obstacle(20.0f, 15.0f));
     simulator.addObstacle(Obstacle(1.0f, 5.0f));
-    simulator.addSensor(&sensor);
-    simulator.start();
-    sensor.start();
-
-    // Ping obstacles
-    // todo: ping obstacles every n ms
+    simulator.addSensor(&sensors[0]);
 
     // Let the threads run
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -23,8 +36,42 @@ int main() {
 
     // Let the threads run
     std::this_thread::sleep_for(std::chrono::seconds(1));
+    stop_test(sensors, simulator);
+}
 
-    sensor.stop();
-    simulator.stop();
+// 3 not in range, then 2 in range 
+// TODO: allow changing/removing of the obstacles
+void test_case2(Simulator& simulator) {
+    int NUM_TEST_SENSORS = 1;
+    std::vector<Sensor> sensors(NUM_TEST_SENSORS);
+
+    start_test(sensors, simulator);
+    simulator.addObstacle(Obstacle(10.0f, 5.0f));
+    simulator.addObstacle(Obstacle(100.0f, 5.0f));
+    simulator.addObstacle(Obstacle(15.0f, 1.0f));
+    simulator.addSensor(&sensors[0]);
+
+    // Let the threads run
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    simulator.addObstacle(Obstacle(1.5f, 1.0f));
+    simulator.addObstacle(Obstacle(0.5f, 1.0f));
+
+    // Let the threads run
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    stop_test(sensors, simulator);
+}
+
+int main() {
+    Simulator simulator;
+    Cpu cpu;
+    simulator.addCpu(&cpu);
+
+    std::cout << "\n\n Test Case 1: \n\n";
+    test_case1(simulator);
+
+    std::cout << "\n\n Test Case 2: \n\n";
+    test_case2(simulator);
+
     return 0;
 }
