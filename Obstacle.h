@@ -1,14 +1,15 @@
 #ifndef OBSTACLE_H
 #define OBSTACLE_H
 
+#include "Ping.h"
+
 struct Obstacle {
     float x;
     float y;
-    float size;
 
-    Obstacle(float x, float y, float sz);
+    Obstacle(float x, float y);
 
-    float ping() const;  // Method to handle a ping and return amplitude
+    Ping ping(const Ping &p) const;  // Method to handle a ping
 };
 
 #endif // OBSTACLE_H

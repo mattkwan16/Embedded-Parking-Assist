@@ -1,21 +1,71 @@
 #include "Simulator.h"
+#include "Ping.h"
 #include <iostream>
+#include <limits>
 
 Simulator::Simulator() {}
 
-Simulator::~Simulator() {}
+Simulator::~Simulator() {
+    stop();
+}
+
+void Simulator::start() {
+    if (!running_) {
+        running_ = true;
+        thread_ = std::thread(&Simulator::pingObstacles, this);
+    }
+}
+
+void Simulator::stop() {
+    if (running_) {
+        running_ = false;
+        if (thread_.joinable()) {
+            thread_.join();
+        }
+    }
+}
 
 void Simulator::addObstacle(const Obstacle& obstacle) {
     std::lock_guard<std::mutex> lock(mtx_);
     obstacles_.push_back(obstacle);
 }
 
-void Simulator::pingObstacles() const {
+void Simulator::addSensor(Sensor* s) {
     std::lock_guard<std::mutex> lock(mtx_);
-    for (const auto& obstacle : obstacles_) {
-        float amplitude = obstacle.ping();
-        std::cout << "Obstacle at (" << obstacle.x << ", " << obstacle.y 
-                  << ") has amplitude: " << amplitude << std::endl;
-    }
+    sensors_.push_back(s);
 }
 
+// Takes a true ping
+// Scales amplitude based on obstacle 
+// Provides time-of-flight (todo: have the sensors wait)
+// Echos the key
+// Simulation should watch sensor constantly if it flags for another ping (each beginning of output loop). 
+
+void Simulator::pingObstacles() const {
+    while (running_) {
+        Ping echo;
+        Ping closest;
+        closest.tof = std::numeric_limits<float>::max();
+        for (int i = 0; i < sensors_.size(); i++) {
+            if (!sensors_[i]->ping_ready()) {
+                continue;
+            }
+            // Ping obstacles from sensor
+            Ping input = sensors_[i]->ping();
+            for (const auto& obstacle : obstacles_) {
+                echo = obstacle.ping(input);
+                /*
+                std::clog << "Simulator: Obstacle at (" << obstacle.x << ", " << obstacle.y 
+                        << ") has amplitude: " << echo.amplitude << std::endl;
+                */
+                // todo: move this intelligence to sensor
+                if (echo.tof != 0.0f && echo.amplitude != 0.0f &&
+                    echo.tof < closest.tof) {
+                    closest = echo;
+                }
+            }
+            std::lock_guard<std::mutex> lock(mtx_);
+            sensors_[i]->updateData(closest);
+        }
+    }
+}

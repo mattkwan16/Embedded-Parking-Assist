@@ -5,7 +5,8 @@
 
 Sensor::Sensor() : 
     running_(false),
-    data_(0.0) {
+    ping_ready_(false),
+    data_() {
 
 }
 
@@ -27,19 +28,39 @@ void Sensor::stop() {
             thread_.join();
         }
     }
+    ping_ready_ = false;
 }
 
-void Sensor::updateData(float data) {
+Ping Sensor::ping() const {
+    Ping p;
+    // todo: keying
+    // todo: amplitude shifting
+    p.amplitude = 1.0f;
+    p.key = "hash1";
+    p.tof = 0.0f;
+    return p;
+}
+
+void Sensor::updateData(Ping const &echo) {
     // Lock the mutex before updating the data
     std::lock_guard<std::mutex> lock(mtx_);
-    data_ = data;
+    data_ = echo;
 }
 
+bool Sensor::ping_ready() const {
+    return ping_ready_;
+}
+
+// Output loop of n ms is the listening window (set flag then wait). 
+// Then it outputs to console and cpu then flag again.
 void Sensor::outputLoop() {
     const int OUTPUT_PERIOD_MS = 200;
     while (running_) {
+        // Set ping flag for sim
+        ping_ready_ = true;
         auto start = std::chrono::high_resolution_clock::now();
         int duration = 0;
+        // Listening window
         while (true) {
             auto end = std::chrono::high_resolution_clock::now();
             duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
@@ -48,8 +69,11 @@ void Sensor::outputLoop() {
             }
         }
 
-        // Output a float
-        std::cout << data_ << std::endl;
+        // Output closest obstacle
+        // todo: ping goes to cpu
+        std::cout << "Closest obstacle (amp, tof, key): ("
+                  << data_.amplitude << ", " << data_.tof
+                  << ", " << data_.key << ")" << std::endl;
 
         // Calculate the elapsed time
         auto end = std::chrono::high_resolution_clock::now();
