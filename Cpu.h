@@ -26,7 +26,8 @@ public:
     void stop();
     void display();
     bool process_ready(){ return process_ready_; };
-    void processSensors(std::vector<Sensor*> s);
+    void addSensor(Sensor* s) { sensors_.push_back(s); }
+    void processSensors(CpuContext& c);
     enum Distance
     {
         EXTREMELY_CLOSE=1,

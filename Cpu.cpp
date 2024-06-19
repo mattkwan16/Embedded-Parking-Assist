@@ -7,7 +7,8 @@
 
 Cpu::Cpu() :
     running_(false) {
-
+    // Process Sensors every 75ms
+    addTask(std::bind(&Cpu::processSensors, this, std::placeholders::_1), 1, std::chrono::milliseconds(75));
 }
 
 Cpu::~Cpu() {
@@ -43,14 +44,14 @@ void Cpu::display() {
     s_ = "\n\nNo new information available.\n\n";
 }
 
-void Cpu::processSensors(std::vector<Sensor*> sensors) {
+void Cpu::processSensors(CpuContext& context) {
     const float EXTREMELY_CLOSE_M = 1.0f;
     const float VERY_CLOSE_M = 2.0f;
     const float SOMEWHAT_CLOSE_M = 3.0f;
     const float NOT_CLOSE_M = 4.0f;
 
     distances_.clear();
-    for (const auto& sensor : sensors) {
+    for (const auto& sensor : sensors_) {
         Ping p = sensor->data();
         float distance_m = p.tof * SPEED_OF_SOUND_MPS;
         if (distance_m > NOT_CLOSE_M || distance_m == 0.0f) {

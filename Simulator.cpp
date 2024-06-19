@@ -47,10 +47,16 @@ void Simulator::addObstacle(const Obstacle& obstacle) {
 void Simulator::addSensor(Sensor* s) {
     std::lock_guard<std::mutex> lock(mtx_);
     sensors_.push_back(s);
+    if (cpu_) {
+        cpu_->addSensor(s);
+    }
 }
 
 void Simulator::addCpu(Cpu* cpu) {
     cpu_ = cpu;
+    for (auto& s : sensors_) {
+        cpu_->addSensor(s);
+    }
 }
 
 // Takes a true ping
@@ -78,10 +84,6 @@ void Simulator::pingObstacles() const {
                 */
                 sensors_[i]->processEcho(echo);
             }
-        }
-        // TODO: instead of this, have cpu keep the list of sensors for itself. That way it can queue the task in an rtos
-        if (cpu_->process_ready()) {
-            cpu_->processSensors(sensors_);
         }
     }
 }
