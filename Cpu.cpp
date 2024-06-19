@@ -7,10 +7,13 @@
 
 Cpu::Cpu() :
     running_(false) {
-    // Process Sensors every 75ms
+    // Process Sensors every time slice
     addTask(std::bind(&Cpu::processSensors, this, std::placeholders::_1), 
         1, std::chrono::milliseconds(Cpu::TIME_SLICE_MS));
-    // Display every 500ms
+    // Prep display every time slice
+    addTask(std::bind(&Cpu::prepDisplay, this, std::placeholders::_1), 
+        1, std::chrono::milliseconds(Cpu::TIME_SLICE_MS));
+    // Display (throttled)
     addTask(std::bind(&Cpu::display, this, std::placeholders::_1), 
         1, std::chrono::milliseconds(Cpu::TIME_SLICE_MS));
 }
@@ -34,7 +37,6 @@ void Cpu::stop() {
             thread_.join();
         }
     }
-    process_ready_ = false;
 }
 
 // Eg. cpu must be able to take in at least 8 sensors and process them 
@@ -43,8 +45,15 @@ void Cpu::stop() {
 // Output: 1-5 scale of distance from each sensor displayed on console
 void Cpu::display(CpuContext& c) {
     //TODO: display the positions of the obstacles?
+    // todo: add context of how far along it is
+    if (std::chrono::steady_clock::now() - c.last_display < 
+        std::chrono::milliseconds(Cpu::DISPLAY_FREQ_MS)) {
+        return;
+    }
+    // Otherwise, it is ready to display
     std::lock_guard<std::mutex> lg(this->mtx_);
     std::cout << s_ << std::endl;
+    c.last_display = std::chrono::steady_clock::now();
     s_ = "\n\nNo new information available.\n\n";
 }
 
@@ -80,10 +89,8 @@ void Cpu::processSensors(CpuContext& context) {
             distances_[i] = EXTREMELY_CLOSE;
         }
         // Add artifical processing delay to simulate DSP
-        std::this_thread::sleep_for(std::chrono::milliseconds(60));
+        std::this_thread::sleep_for(std::chrono::milliseconds(51));
     }
-    // todo make this into a task
-    prepDisplay();
 
     // reset context if it makes it to end
     context.process_iter = 0;
@@ -91,10 +98,17 @@ void Cpu::processSensors(CpuContext& context) {
 }
 
 // Prepping the display means the cpu can keep up
-void Cpu::prepDisplay() {
-    // todo: initialize with context
-    std::stringstream oss;
-    for (int i = 1; i <= distances_.size(); i++) {
+void Cpu::prepDisplay(CpuContext& context) {
+    auto start = std::chrono::steady_clock::now();
+    // initialize with context
+    std::stringstream oss(context.oss);
+    for (int i = context.display_iter; i <= distances_.size(); i++) {
+        if (std::chrono::steady_clock::now() - start >= std::chrono::milliseconds(TIME_SLICE_MS)) {
+            // Save to context and quit if out of time
+            context.oss = oss.str().c_str();
+            context.display_iter = i;
+            return;
+        }
         std::string stars(distances_[i-1], '*');
         if (distances_[i-1] == OUT_OF_RANGE) {
             stars = "--- n/a ---";
@@ -104,16 +118,17 @@ void Cpu::prepDisplay() {
     }
     std::lock_guard<std::mutex> lg(this->mtx_);
     s_ = oss.str().c_str();
+    // Reset context if finish
+    context.oss = "";
+    context.display_iter = 1;
+    return;
 }
 
 void Cpu::addTask(std::function<void(CpuContext&)> task, int priority, std::chrono::milliseconds timeSlice) {
-    std::lock_guard<std::mutex> lock(task_mtx_);
     tasks_.push_back({task, READY, priority, CpuContext(), timeSlice, std::chrono::steady_clock::now()});
 }
 
 void Cpu::processLoop() {
-    const int OUTPUT_PERIOD_MS = 500;
-    //const int TIME_SLICE_MS = 100;
     int i_task = 0;
     while (running_) {
         int duration = 0;
