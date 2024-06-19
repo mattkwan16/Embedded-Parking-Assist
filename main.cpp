@@ -61,6 +61,9 @@ void test_case2(Simulator& simulator) {
     stop_test(sensors, simulator);
 }
 
+// TODO: add jammer (does not key)
+// TODO: add jammer (echos key but doesnt adjust amplitude)
+
 int main() {
     // Globally initialize rand()
     srand (time(NULL));

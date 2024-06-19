@@ -68,7 +68,6 @@ void Simulator::pingObstacles() const {
                 continue;
             }
             // Ping obstacles from sensor
-            // todo: move this intelligence to sensor
             Ping input = sensors_[i]->ping();
 
             for (const auto& obstacle : obstacles_) {
@@ -80,6 +79,7 @@ void Simulator::pingObstacles() const {
                 sensors_[i]->processEcho(echo);
             }
         }
+        // TODO: instead of this, have cpu keep the list of sensors for itself. That way it can queue the task in an rtos
         if (cpu_->process_ready()) {
             cpu_->processSensors(sensors_);
         }

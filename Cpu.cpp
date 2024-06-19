@@ -83,6 +83,11 @@ void Cpu::prepDisplay() {
     s_ = oss.str().c_str();
 }
 
+void Cpu::addTask(std::function<void(CpuContext&)> task, int priority, std::chrono::milliseconds timeSlice) {
+    std::lock_guard<std::mutex> lock(task_mtx_);
+    tasks_.push_back({task, READY, priority, CpuContext(), timeSlice, std::chrono::steady_clock::now()});
+}
+
 void Cpu::processLoop() {
     const int OUTPUT_PERIOD_MS = 500;
     while (running_) {
@@ -96,9 +101,15 @@ void Cpu::processLoop() {
             auto end = std::chrono::high_resolution_clock::now();
             duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
             if (duration >= OUTPUT_PERIOD_MS) {
-                process_ready_ = false;
+                process_ready_ = false; // how would you suspend this if it is ongoing? 
+                // while (ready) {process} then when not ready save the iter and the distances?
+                // not really needed bc my time slices are bigger than my processes
+                // Even if we scheduled them all together theyd never have to restore
+                // RMS: high rate is high priority
                 break;
             }
+            // TODO: make this an interrupt-driven system by having other breaks
+            // eg if greater than or equal to another_period then do other processing
         }
 
         display();
