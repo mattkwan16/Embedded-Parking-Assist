@@ -24,7 +24,9 @@ void stop_test(std::vector<Sensor>& sensors, Simulator& simulator) {
 void test_case1(Simulator& simulator) {
     int NUM_TEST_SENSORS = 1;
     std::vector<Sensor> sensors(NUM_TEST_SENSORS);
-    simulator.addSensor(&sensors[0]);
+    for (int i = 0; i < NUM_TEST_SENSORS; i++) {
+        simulator.addSensor(&sensors[i]);
+    }
     simulator.addObstacle(Obstacle(20.0f, 15.0f));
     simulator.addObstacle(Obstacle(1.5f, 3.0f));
     start_test(sensors, simulator);
@@ -42,9 +44,11 @@ void test_case1(Simulator& simulator) {
 // 3 not in range, then 2 in range 
 // TODO: allow changing/removing of the obstacles
 void test_case2(Simulator& simulator) {
-    int NUM_TEST_SENSORS = 1;
+    int NUM_TEST_SENSORS = 3;
     std::vector<Sensor> sensors(NUM_TEST_SENSORS);
-    simulator.addSensor(&sensors[0]);
+    for (int i = 0; i < NUM_TEST_SENSORS; i++) {
+        simulator.addSensor(&sensors[i]);
+    }
     simulator.addObstacle(Obstacle(10.0f, 5.0f));
     simulator.addObstacle(Obstacle(100.0f, 5.0f));
     simulator.addObstacle(Obstacle(15.0f, 1.0f));

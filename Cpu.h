@@ -8,12 +8,10 @@
 
 struct CpuContext {
     int process_iter;
-    Ping p;
     int display_iter;
     std::string oss;
     CpuContext () :
         process_iter(0),
-        p(),
         display_iter(1),
         oss("") {}
 };
@@ -24,9 +22,10 @@ public:
     ~Cpu();
     void start();
     void stop();
-    void display();
+    void display(CpuContext& c);
     bool process_ready(){ return process_ready_; };
     void addSensor(Sensor* s) { sensors_.push_back(s); }
+    void clear() { sensors_.clear(); }
     void processSensors(CpuContext& c);
     enum Distance
     {
@@ -37,6 +36,7 @@ public:
         OUT_OF_RANGE
     };
 private:
+    static constexpr int TIME_SLICE_MS = 100;
     void processLoop();
     std::thread thread_;
     bool running_;

@@ -8,7 +8,11 @@
 Cpu::Cpu() :
     running_(false) {
     // Process Sensors every 75ms
-    addTask(std::bind(&Cpu::processSensors, this, std::placeholders::_1), 1, std::chrono::milliseconds(75));
+    addTask(std::bind(&Cpu::processSensors, this, std::placeholders::_1), 
+        1, std::chrono::milliseconds(Cpu::TIME_SLICE_MS));
+    // Display every 500ms
+    addTask(std::bind(&Cpu::display, this, std::placeholders::_1), 
+        1, std::chrono::milliseconds(Cpu::TIME_SLICE_MS));
 }
 
 Cpu::~Cpu() {
@@ -37,7 +41,7 @@ void Cpu::stop() {
 // concurrently and output twice per second. 
 // Input: Proximity information relative to 8 sensors as a vector of 8 float32 values
 // Output: 1-5 scale of distance from each sensor displayed on console
-void Cpu::display() {
+void Cpu::display(CpuContext& c) {
     //TODO: display the positions of the obstacles?
     std::lock_guard<std::mutex> lg(this->mtx_);
     std::cout << s_ << std::endl;
@@ -45,32 +49,50 @@ void Cpu::display() {
 }
 
 void Cpu::processSensors(CpuContext& context) {
+    auto start = std::chrono::steady_clock::now();
+
     const float EXTREMELY_CLOSE_M = 1.0f;
     const float VERY_CLOSE_M = 2.0f;
     const float SOMEWHAT_CLOSE_M = 3.0f;
     const float NOT_CLOSE_M = 4.0f;
 
-    distances_.clear();
-    for (const auto& sensor : sensors_) {
+    //distances_.clear();
+    distances_.resize(sensors_.size()); // todo, better init
+    for (int i = context.process_iter; i < sensors_.size(); i++) {
+        auto& sensor = sensors_[i];
+        // Check for "interrupt"
+        if (std::chrono::steady_clock::now() - start >= std::chrono::milliseconds(Cpu::TIME_SLICE_MS)) {
+            // Save context
+            context.process_iter = i;
+            return;
+        }
         Ping p = sensor->data();
         float distance_m = p.tof * SPEED_OF_SOUND_MPS;
         if (distance_m > NOT_CLOSE_M || distance_m == 0.0f) {
-            distances_.push_back(OUT_OF_RANGE);
+            distances_[i] = OUT_OF_RANGE;
         } else if (distance_m > SOMEWHAT_CLOSE_M) {
-            distances_.push_back(NOT_CLOSE);
+            distances_[i] = NOT_CLOSE;
         } else if (distance_m > VERY_CLOSE_M) {
-            distances_.push_back(SOMEWHAT_CLOSE);
+            distances_[i] = SOMEWHAT_CLOSE;
         } else if (distance_m > EXTREMELY_CLOSE_M) {
-            distances_.push_back(VERY_CLOSE);
+            distances_[i] = VERY_CLOSE;
         } else {
-            distances_.push_back(EXTREMELY_CLOSE);
+            distances_[i] = EXTREMELY_CLOSE;
         }
+        // Add artifical processing delay to simulate DSP
+        std::this_thread::sleep_for(std::chrono::milliseconds(60));
     }
+    // todo make this into a task
     prepDisplay();
+
+    // reset context if it makes it to end
+    context.process_iter = 0;
+    return;
 }
 
 // Prepping the display means the cpu can keep up
 void Cpu::prepDisplay() {
+    // todo: initialize with context
     std::stringstream oss;
     for (int i = 1; i <= distances_.size(); i++) {
         std::string stars(distances_[i-1], '*');
@@ -91,35 +113,29 @@ void Cpu::addTask(std::function<void(CpuContext&)> task, int priority, std::chro
 
 void Cpu::processLoop() {
     const int OUTPUT_PERIOD_MS = 500;
+    //const int TIME_SLICE_MS = 100;
+    int i_task = 0;
     while (running_) {
-        // Set ping flag for sim
-        // Change to false during display
-        process_ready_ = true;
-        auto start = std::chrono::high_resolution_clock::now();
         int duration = 0;
         // Waiting-for-sensors window
-        while (true && running_) {
-            auto end = std::chrono::high_resolution_clock::now();
-            duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-            if (duration >= OUTPUT_PERIOD_MS) {
-                process_ready_ = false; // how would you suspend this if it is ongoing? 
-                // while (ready) {process} then when not ready save the iter and the distances?
-                // not really needed bc my time slices are bigger than my processes
-                // Even if we scheduled them all together theyd never have to restore
-                // RMS: high rate is high priority
-                break;
-            }
-            // TODO: make this an interrupt-driven system by having other breaks
-            // eg if greater than or equal to another_period then do other processing
+        auto& task = tasks_[i_task];
+        auto start = std::chrono::steady_clock::now();
+        task.task(task.context);
+        // Wait for time slice window to end
+        while (std::chrono::steady_clock::now() - start < task.timeSlice) {
+            // Future work: Do background work here
         }
-
-        display();
 
         // Calculate the elapsed time
         auto end = std::chrono::high_resolution_clock::now();
         duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
         // Print the elapsed time to ensure it's approximately n milliseconds
-        std::cout << "CPU elapsed time: " << duration << " milliseconds" << std::endl;
+        std::cout << "CPU task " << i_task << " elapsed time: " << duration << " milliseconds" << std::endl;
+        if (i_task >= tasks_.size() - 1) {\
+            i_task = 0;
+        } else {
+            i_task++;
+        }
     }
 }

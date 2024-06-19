@@ -37,6 +37,9 @@ void Simulator::stop() {
 void Simulator::clear() {
     sensors_.clear();
     obstacles_.clear();
+    if (cpu_) {
+        cpu_->clear();
+    }
 }
 
 void Simulator::addObstacle(const Obstacle& obstacle) {
