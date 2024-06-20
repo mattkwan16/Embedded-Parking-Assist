@@ -4,6 +4,7 @@
 #include "Obstacle.h"
 #include "Cpu.h"
 #include "Simulator.h"
+#include "Jammer.h"
 
 void start_test(std::vector<Sensor>& sensors, Simulator& simulator) {
     simulator.start();
@@ -67,6 +68,27 @@ void test_case2(Simulator& simulator) {
 
 // TODO: add jammer (does not key)
 // TODO: add jammer (echos key but doesnt adjust amplitude)
+void test_case3(Simulator& simulator) {
+    Jammer jammer;
+    simulator.addJammer(&jammer);
+    int NUM_TEST_SENSORS = 1;
+    std::vector<Sensor> sensors(NUM_TEST_SENSORS);
+    for (int i = 0; i < NUM_TEST_SENSORS; i++) {
+        simulator.addSensor(&sensors[i]);
+    }
+    simulator.addObstacle(Obstacle(20.0f, 15.0f));
+    simulator.addObstacle(Obstacle(1.5f, 3.0f));
+    start_test(sensors, simulator);
+    simulator.jam();
+    // Let the threads run
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    simulator.addObstacle(Obstacle(1.5f, 1.0f));
+
+    // Let the threads run
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    stop_test(sensors, simulator);
+}
 
 int main() {
     // Globally initialize rand()
@@ -81,6 +103,9 @@ int main() {
 
     std::cout << "\n\n Test Case 2: \n\n";
     test_case2(simulator);
+
+    std::cout << "\n\n Test Case 3 (Jammer): \n\n";
+    test_case3(simulator);
 
     return 0;
 }

@@ -28,7 +28,7 @@ public:
     void start();
     void stop();
     void display(CpuContext& c);
-    void addSensor(Sensor* s) { sensors_.push_back(s); }
+    void sensors(std::vector<Sensor*> s) { sensors_ = s; }
     void clear() { sensors_.clear(); }
     void processSensors(CpuContext& c);
     enum Distance
