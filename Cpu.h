@@ -40,7 +40,7 @@ public:
         OUT_OF_RANGE
     };
 private:
-    static constexpr int TIME_SLICE_MS = 100;
+    static constexpr int TIME_SLICE_MS = 50;
     static constexpr int DISPLAY_FREQ_MS = 300;
     void processLoop();
     std::thread thread_;

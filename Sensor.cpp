@@ -91,7 +91,6 @@ bool Sensor::ping_ready() const {
 // Output loop of n ms is the listening window (set flag then wait). 
 // Then it outputs to console and cpu then flag again.
 void Sensor::outputLoop() {
-    const int OUTPUT_PERIOD_MS = 200;
     while (running_) {
         // Set ping flag for sim
         ping_ready_ = true;
@@ -101,7 +100,7 @@ void Sensor::outputLoop() {
         while (true) {
             auto end = std::chrono::high_resolution_clock::now();
             duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-            if (duration >= OUTPUT_PERIOD_MS) {
+            if (duration >= Sensor::OUTPUT_PERIOD_MS) {
                 break;
             }
         }

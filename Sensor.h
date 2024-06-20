@@ -24,6 +24,7 @@ public:
     Ping data() { return data_; };
     Ping ping();
     bool ping_ready() const;
+    static constexpr int OUTPUT_PERIOD_MS = 80;
 
 private:
     void outputLoop();
