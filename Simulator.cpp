@@ -37,6 +37,9 @@ void Simulator::stop() {
 void Simulator::clear() {
     sensors_.clear();
     obstacles_.clear();
+    if (cpu_) {
+        cpu_->clear();
+    }
 }
 
 void Simulator::addObstacle(const Obstacle& obstacle) {
@@ -47,10 +50,16 @@ void Simulator::addObstacle(const Obstacle& obstacle) {
 void Simulator::addSensor(Sensor* s) {
     std::lock_guard<std::mutex> lock(mtx_);
     sensors_.push_back(s);
+    if (cpu_) {
+        cpu_->addSensor(s);
+    }
 }
 
 void Simulator::addCpu(Cpu* cpu) {
     cpu_ = cpu;
+    for (auto& s : sensors_) {
+        cpu_->addSensor(s);
+    }
 }
 
 // Takes a true ping
@@ -62,31 +71,22 @@ void Simulator::addCpu(Cpu* cpu) {
 void Simulator::pingObstacles() const {
     while (running_) {
         Ping echo;
-        Ping closest;
-        closest.tof = std::numeric_limits<float>::max();
+
         for (int i = 0; i < sensors_.size(); i++) {
             if (!sensors_[i]->ping_ready()) {
                 continue;
             }
             // Ping obstacles from sensor
             Ping input = sensors_[i]->ping();
+
             for (const auto& obstacle : obstacles_) {
                 echo = obstacle.ping(input);
                 /*
                 std::clog << "Simulator: Obstacle at (" << obstacle.x << ", " << obstacle.y 
                         << ") has amplitude: " << echo.amplitude << std::endl;
                 */
-                // todo: move this intelligence to sensor
-                if (echo.tof != 0.0f && echo.amplitude != 0.0f &&
-                    echo.tof < closest.tof) {
-                    closest = echo;
-                }
+                sensors_[i]->processEcho(echo);
             }
-            std::lock_guard<std::mutex> lock(mtx_);
-            sensors_[i]->updateData(closest);
-        }
-        if (cpu_->process_ready()) {
-            cpu_->processSensors(sensors_);
         }
     }
 }

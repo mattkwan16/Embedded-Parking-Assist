@@ -6,7 +6,7 @@
 Sensor::Sensor() : 
     running_(false),
     ping_ready_(false),
-    data_() {
+    data_(Ping()) {
 
 }
 
@@ -31,14 +31,51 @@ void Sensor::stop() {
     ping_ready_ = false;
 }
 
-Ping Sensor::ping() const {
+float Sensor::amplitudeShift() {
+    const float MIN_AMP = 1.5f;
+    // max must be int for mod
+    const int MAX_AMP = 5;
+    return MIN_AMP + float(rand() % MAX_AMP);
+}
+
+std::string Sensor::key() {
+    const int LEN_POSSIBLE_CHARS = 62;
+    const int LEN_HASH = 7;
+    std::string s(LEN_HASH, 0); 
+    std::generate(s.begin(), s.end(), []{
+        return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"[rand() % LEN_POSSIBLE_CHARS];
+        }); 
+    return s;
+}
+
+Ping Sensor::ping() {
     Ping p;
-    // todo: keying
-    // todo: amplitude shifting
-    p.amplitude = 1.0f;
-    p.key = "hash1";
+    p.amplitude = amplitudeShift();
+    p.key = key();
     p.tof = 0.0f;
+
+    // Display
+    std::cout << "Sent ping (amp, tof, key): ("
+                << p.amplitude << ", " << p.tof
+                << ", " << p.key << ")" << std::endl;
+
+    // Reset previous ping information
+    ping_ready_ = false;
+    sentData_ = p;
+    updateData(Ping());
+
     return p;
+}
+
+// processEcho: update data iff it has correctly scaled amplitude,
+// matches the hash, and is closer than the other pings
+void Sensor::processEcho(Ping const &echo) {
+    if (echo.tof != 0.0f && echo.tof != std::numeric_limits<float>::max() &&
+        echo.amplitude != 0.0f && echo.amplitude < sentData_.amplitude &&
+        echo.key == sentData_.key &&
+        echo.tof < data_.tof) {
+        updateData(echo);
+    }
 }
 
 void Sensor::updateData(Ping const &echo) {
@@ -54,7 +91,6 @@ bool Sensor::ping_ready() const {
 // Output loop of n ms is the listening window (set flag then wait). 
 // Then it outputs to console and cpu then flag again.
 void Sensor::outputLoop() {
-    const int OUTPUT_PERIOD_MS = 200;
     while (running_) {
         // Set ping flag for sim
         ping_ready_ = true;
@@ -64,13 +100,11 @@ void Sensor::outputLoop() {
         while (true) {
             auto end = std::chrono::high_resolution_clock::now();
             duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-            if (duration >= OUTPUT_PERIOD_MS) {
+            if (duration >= Sensor::OUTPUT_PERIOD_MS) {
                 break;
             }
         }
-
         // Output closest obstacle
-        // todo: ping goes to cpu
         std::cout << "Closest obstacle (amp, tof, key): ("
                   << data_.amplitude << ", " << data_.tof
                   << ", " << data_.key << ")" << std::endl;
