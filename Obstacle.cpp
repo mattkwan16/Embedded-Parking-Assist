@@ -21,9 +21,7 @@ Ping Obstacle::ping(const Ping &input) const {
         output.tof = distance/SPEED_OF_SOUND_MPS;
         return output;
     } else {
-        // Return 0 if the obstacle is out of range
-        output.amplitude = 0.0f;
-        output.tof = 0.0f;
-        return output;
+        // Return no echo if the obstacle is out of range
+        return Ping();
     }
 }

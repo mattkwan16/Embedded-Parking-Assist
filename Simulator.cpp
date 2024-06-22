@@ -5,7 +5,8 @@
 
 Simulator::Simulator() : 
     running_(false),
-    cpu_(nullptr) {
+    cpu_(nullptr),
+    jammer_(nullptr) {
 }
 
 Simulator::~Simulator() {
@@ -18,6 +19,7 @@ void Simulator::start() {
         thread_ = std::thread(&Simulator::pingObstacles, this);
     }
     if (cpu_) {
+        cpu_->sensors(sensors_);
         cpu_->start();
     }
 }
@@ -31,6 +33,18 @@ void Simulator::stop() {
     }
     if (cpu_) {
         cpu_->stop();
+    }
+    if (jammer_) {
+        jammer_->stop();
+    }
+}
+
+void Simulator::jam() {
+    if (jammer_) {
+        jammer_->sensors(sensors_);
+        jammer_->start();
+    } else {
+        std::cerr << "Error: No jammer to use!\n";
     }
 }
 
@@ -50,16 +64,14 @@ void Simulator::addObstacle(const Obstacle& obstacle) {
 void Simulator::addSensor(Sensor* s) {
     std::lock_guard<std::mutex> lock(mtx_);
     sensors_.push_back(s);
-    if (cpu_) {
-        cpu_->addSensor(s);
-    }
 }
 
 void Simulator::addCpu(Cpu* cpu) {
     cpu_ = cpu;
-    for (auto& s : sensors_) {
-        cpu_->addSensor(s);
-    }
+}
+
+void Simulator::addJammer(Jammer* j) {
+    jammer_ = j;
 }
 
 // Takes a true ping
@@ -81,6 +93,10 @@ void Simulator::pingObstacles() const {
 
             for (const auto& obstacle : obstacles_) {
                 echo = obstacle.ping(input);
+                // Provide ping to jammer
+                if (jammer_) {
+                    jammer_->receivePing(input);
+                }
                 /*
                 std::clog << "Simulator: Obstacle at (" << obstacle.x << ", " << obstacle.y 
                         << ") has amplitude: " << echo.amplitude << std::endl;

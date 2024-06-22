@@ -62,7 +62,8 @@ Ping Sensor::ping() {
     // Reset previous ping information
     ping_ready_ = false;
     sentData_ = p;
-    updateData(Ping());
+    // Note that data_ will hold onto the latest one
+    // todo (optional): remove data_ when it becomes stale
 
     return p;
 }
@@ -70,12 +71,28 @@ Ping Sensor::ping() {
 // processEcho: update data iff it has correctly scaled amplitude,
 // matches the hash, and is closer than the other pings
 void Sensor::processEcho(Ping const &echo) {
-    if (echo.tof != 0.0f && echo.tof != std::numeric_limits<float>::max() &&
-        echo.amplitude != 0.0f && echo.amplitude < sentData_.amplitude &&
-        echo.key == sentData_.key &&
-        echo.tof < data_.tof) {
-        updateData(echo);
+    if (!running_) { 
+        return;
     }
+    // Empty echo check
+    if (echo.tof == 0.0f || echo.tof == std::numeric_limits<float>::max() ||
+        echo.amplitude <= 0.0f) {
+        return;
+    }
+
+    // Cybersecurity check
+    if (echo.amplitude >= sentData_.amplitude ||
+        echo.key != sentData_.key) {
+        std::cout << "Sensor ignored suspicious echo with key: " << echo.key << std::endl;
+        return;
+    }
+
+    // Data is valid, but is it closer than existing obstacle?
+    if (echo.tof > data_.tof) {
+        std::cout << "Sensor: " << data_.key << " is closer than " << echo.key << std::endl;
+        return;
+    }
+    updateData(echo);
 }
 
 void Sensor::updateData(Ping const &echo) {
