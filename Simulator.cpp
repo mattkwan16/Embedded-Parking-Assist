@@ -93,6 +93,10 @@ void Simulator::pingObstacles() const {
 
             for (const auto& obstacle : obstacles_) {
                 echo = obstacle.ping(input);
+                // Provide ping to jammer
+                if (jammer_) {
+                    jammer_->receivePing(input);
+                }
                 /*
                 std::clog << "Simulator: Obstacle at (" << obstacle.x << ", " << obstacle.y 
                         << ") has amplitude: " << echo.amplitude << std::endl;

@@ -41,6 +41,14 @@ Ping Jammer::ping(float amp, std::string key, float tof) {
     return p;
 }
 
+Ping Jammer::ping(Ping p) {
+    return ping(DEFAULT_AMP, p.key, DEFAULT_TOF);
+}
+
+void Jammer::receivePing(Ping p) {
+    copy_ = p;
+}
+
 void Jammer::jam() {
     while (running_) {
         auto start = std::chrono::high_resolution_clock::now();
@@ -48,7 +56,7 @@ void Jammer::jam() {
         Ping echo;
 
         for (int i = 0; i < sensors_.size(); i++) {
-            sensors_[i]->processEcho(this->ping());
+            sensors_[i]->processEcho(this->ping(copy_));
         }
         while (true) {
             auto end = std::chrono::high_resolution_clock::now();

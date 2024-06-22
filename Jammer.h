@@ -20,12 +20,18 @@ public:
     void jam();
     void sensors(std::vector<Sensor*> s) { sensors_ = s; }
     static constexpr int OUTPUT_PERIOD_MS = 20;
+    static constexpr float DEFAULT_AMP = 9.0f;
+    static constexpr float DEFAULT_TOF = 0.5f;
+    inline static const std::string DEFAULT_KEY = "jjjjjjj";
+    void receivePing(Ping p);
 
 private:
-    Ping ping(float a = 9.0f, std::string s = "jjjjjj", float tof = 0.5f);
+    Ping ping(float a = DEFAULT_AMP, std::string s = DEFAULT_KEY, float tof = DEFAULT_TOF);
+    Ping ping(Ping p);
     bool running_;
     std::thread thread_;
     std::vector<Sensor*> sensors_;
+    Ping copy_;
 };
 
 #endif // JAMMER_H

@@ -89,7 +89,7 @@ void Cpu::processSensors(CpuContext& context) {
             distances_[i] = EXTREMELY_CLOSE;
         }
         // Add artifical processing delay to simulate DSP
-        std::this_thread::sleep_for(std::chrono::milliseconds(51));
+        std::this_thread::sleep_for(std::chrono::milliseconds(int(0.99*Cpu::TIME_SLICE_MS)));
     }
 
     // reset context if it makes it to end
