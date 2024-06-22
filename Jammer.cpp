@@ -27,6 +27,7 @@ void Jammer::stop() {
     }
 }
 
+// Prepares a ping to be emitted to a sensor
 Ping Jammer::ping(float amp, std::string key, float tof) {
     Ping p;
     p.amplitude = amp;
@@ -45,10 +46,12 @@ Ping Jammer::ping(Ping p) {
     return ping(DEFAULT_AMP, p.key, DEFAULT_TOF);
 }
 
+// Saves a copy of the sensor ping's waveform to be echoed back
 void Jammer::receivePing(Ping p) {
     copy_ = p;
 }
 
+// Pings a sensor directly using a copy of the sensor's ping
 void Jammer::jam() {
     while (running_) {
         auto start = std::chrono::high_resolution_clock::now();
