@@ -19,6 +19,7 @@ void stop_test(std::vector<Sensor>& sensors, Simulator& simulator) {
     }
     simulator.stop();
     simulator.clear();
+    std::cout << "Test complete. Type y to continue.\n";
 }
 
 // One out of range, one in range, then one closer in range
@@ -68,6 +69,7 @@ void test_case2(Simulator& simulator) {
 
 // TODO: add jammer (does not key)
 // TODO: add jammer (echos key but doesnt adjust amplitude)
+// One out of range, one in range, then one closer in range. Jammer.
 void test_case3(Simulator& simulator) {
     Jammer jammer;
     simulator.addJammer(&jammer);
@@ -98,13 +100,18 @@ int main() {
     Cpu cpu;
     simulator.addCpu(&cpu);
 
-    std::cout << "\n\n Test Case 1: \n\n";
+    std::string in;
+    std::cout << "Type y to continue.\n";
+    std::cout << "\n\n Test Case 1: One out of range, one in range, then one closer in range\n\n";
+    std::cin >> in;
     test_case1(simulator);
 
-    std::cout << "\n\n Test Case 2: \n\n";
+    std::cout << "\n\n Test Case 2: 3 not in range, then 2 in range \n\n";
+    std::cin >> in;
     test_case2(simulator);
+    std::cin >> in;
 
-    std::cout << "\n\n Test Case 3 (Jammer): \n\n";
+    std::cout << "\n\n Test Case 3: One out of range, one in range, then one closer in range. Jammer.\n\n";
     test_case3(simulator);
 
     return 0;
